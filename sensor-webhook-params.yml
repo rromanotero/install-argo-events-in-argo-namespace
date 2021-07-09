@@ -24,22 +24,22 @@ spec:
               metadata:
                 generateName: webhook-
               spec:
-                entrypoint: whalesay
+                entrypoint: pipeline
                 serviceAccountName: user-workflow-sa
                 arguments:
                   parameters:
-                    - name: message
+                    - name: payload
                       # the value will get prepended by event payload from test-dep
                       value: hello world
                 templates:
-                  - name: whalesay
+                  - name: pipeline
                     inputs:
                       parameters:
-                        - name: message
+                        - name: payload
                     container:
-                      image: docker/whalesay:latest
+                      image: debian:latest
                       command: [echo]
-                      args: ["{{inputs.parameters.message}}"]
+                      args: ["Pipeline triggered. Building repository {{inputs.parameters.payload.url}} at commit {{inputs.parameters.payload.head_commit.id}}"]
           parameters:
             - src:
                 dependencyName: test-dep
