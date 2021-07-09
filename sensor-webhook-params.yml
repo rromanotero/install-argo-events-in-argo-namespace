@@ -39,7 +39,7 @@ spec:
                     container:
                       image: debian:latest
                       command: [echo]
-                      args: ["Pipeline triggered. Building repository {{inputs.parameters.payload.url}} at commit {{inputs.parameters.payload.head_commit.id}}"]
+                      args: ["Pipeline triggered. Github webhook payload: {{inputs.parameters.payload}}"]
           parameters:
             - src:
                 dependencyName: test-dep
