@@ -38,7 +38,7 @@ spec:
                         - name: message
                     container:
                       image: docker/whalesay:latest
-                      command: [cowsay]
+                      command: [echo]
                       args: ["{{inputs.parameters.message}}"]
           parameters:
             - src:
