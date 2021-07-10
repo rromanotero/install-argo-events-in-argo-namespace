@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: ci-pipeline
+spec:
+  entrypoint: pipeline
+  serviceAccountName: user-workflow-sa
+  templates:
+  - name: pipeline
+    steps:
+    - - name: clone
+        template: clone
+        arguments:
+          parameters: [{name: git_url, value: "https://github.com/rromanotero/test_repo.git"}]
+
+  - name: clone
+    inputs:
+      parameters:
+      - name: git_url
+    container:
+      image: alpine/git
+      command: [git, clone]
+      args: ["{{inputs.parameters.git_url}}"]
