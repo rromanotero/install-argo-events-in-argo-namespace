@@ -36,10 +36,19 @@ spec:
                     inputs:
                       parameters:
                         - name: payload
+                    steps:
+                    - - name: clone
+                        template: clone
+                        arguments: [{{inputs.parameters.payload}}]
+                  - name: clone
+                    inputs:
+                      parameters:
+                      - name: payload
                     container:
-                      image: debian:latest
-                      command: [echo]
-                      args: ["Pipeline triggered. Github webhook payload: {{inputs.parameters.payload}}"]
+                      image: alpine/git
+                      command: [sh, -c]
+                      source: |
+                        echo 'Pipeline triggered. Github webhook payload: {{inputs.parameters.payload}}'
           parameters:
             - src:
                 dependencyName: test-dep
