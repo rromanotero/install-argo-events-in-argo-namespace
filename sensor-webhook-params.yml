@@ -1,61 +1,54 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: webhook
+  name: github-webhook
 spec:
   template:
     serviceAccountName: operate-workflow-sa
   dependencies:
-    - name: test-dep
+    - name: github-trigger-dependency
       eventSourceName: webhook
       eventName: github
   triggers:
     - template:
-        name: webhook-workflow-trigger
+        name: pipeline-trigger
         k8s:
           group: argoproj.io
           version: v1alpha1
           resource: workflows
           operation: create
+          parameters:
+            - src:
+                dependencyName: github-trigger-dependency
+                dataKey: body
+              dest: spec.arguments.parameters.0.value
           source:
             resource:
               apiVersion: argoproj.io/v1alpha1
               kind: Workflow
               metadata:
-                generateName: webhook-
+                generateName: pipeline-
               spec:
-                entrypoint: triggerPipeline
+                entrypoint: pipeline
                 serviceAccountName: user-workflow-sa
                 arguments:
                   parameters:
                   - name: payload
-                    value: "EMPTY"
-                  - name: workflowtemplate
-                    value: "ci-pipeline"
+                    value: "ERROR_GITHUB_PAYLOAD_EMPTY"
                 templates:
-                  - name: triggerPipeline
-                    inputs:
-                      parameters:
-                        - name: workflowtemplate
+                - name: pipeline
+                  steps:
+                  - - name: clone
+                      template: clone
+                      arguments:
+                        parameters:
                         - name: payload
-                    resource:
-                      action: create
-                      manifest: |
-                        apiVersion: argoproj.io/v1alpha1
-                        kind: Workflow
-                        metadata:
-                          generateName: ci-pipeline-
-                        spec:
-                          arguments:
-                            parameters:
-                            - name: payload
-                              value: {{inputs.parameters.payload}}
-                          workflowTemplateRef:
-                            name: {{inputs.parameters.workflowtemplate}}
-                      successCondition: status.phase == Succeeded
-                      failureCondition: status.phase in (Failed, Error)
-          parameters:
-            - src:
-                dependencyName: test-dep
-                dataKey: body
-              dest: spec.arguments.parameters.0.value
+                          value: "{{workflow.parameters.payload}}"
+                - name: clone
+                  inputs:
+                    parameters:
+                    - name: payload
+                  container:
+                    image: alpine/git
+                    command: [echo]
+                    args: ["Payload received: {{inputs.parameters.payload}}"]
