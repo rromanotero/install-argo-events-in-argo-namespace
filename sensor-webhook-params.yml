@@ -28,13 +28,15 @@ spec:
                 serviceAccountName: user-workflow-sa
                 arguments:
                   parameters:
-                    - name: payload
-                      # the value will get prepended by event payload from test-dep
-                      value: hello world
+                  - name: payload
+                    value: "EMPTY"
+                  - name: workflowtemplate
+                    value: "ci-pipeline"
                 templates:
                   - name: triggerPipeline
                     inputs:
                       parameters:
+                        - name: workflowtemplate
                         - name: payload
                     resource:
                       action: create
@@ -49,7 +51,7 @@ spec:
                             - name: payload
                               value: {{inputs.parameters.payload}}
                           workflowTemplateRef:
-                            name: ci-pipeline
+                            name: {{inputs.parameters.workflowtemplate}}
                       successCondition: status.phase == Succeeded
                       failureCondition: status.phase in (Failed, Error)
           parameters:

@@ -5,19 +5,25 @@ metadata:
 spec:
   entrypoint: pipeline
   serviceAccountName: user-workflow-sa
+  arguments:
+    parameters:
+      - name: payload
+        value: empty
   templates:
   - name: pipeline
     steps:
     - - name: clone
         template: clone
         arguments:
-          parameters: [{name: git_url, value: "https://github.com/rromanotero/test_repo.git"}]
+          parameters:
+          - name: payload
+            value: "{{workflow.parameters.payload}}"
 
   - name: clone
     inputs:
       parameters:
-      - name: git_url
+      - name: payload
     container:
       image: alpine/git
-      command: [git, clone]
-      args: ["{{inputs.parameters.git_url}}"]
+      command: [echo]
+      args: ["Payload received: {{inputs.parameters.payload}}"]
