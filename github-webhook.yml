@@ -38,17 +38,43 @@ spec:
                 templates:
                 - name: pipeline
                   steps:
-                  - - name: clone
-                      template: clone
+                  - - name: parse-payload
+                      template: parse-payload
                       arguments:
                         parameters:
                         - name: payload
                           value: "{{workflow.parameters.payload}}"
-                - name: clone
+                - name: parse-payload
                   inputs:
                     parameters:
                     - name: payload
-                  container:
-                    image: alpine/git
-                    command: [echo]
-                    args: ["Payload received: {{inputs.parameters.payload}}"]
+                  script:
+                    image: python:alpine3.9
+                    command: [python]
+                    source: |
+                      import json
+
+                      raw_payload = '{{inputs.parameters.payload}}'
+                      print(f"Unprocessed Github payload:\n\n {raw_payload}")
+
+                      payload = json.loads(raw_payload)
+
+                      try:
+                        repo_name = payload['repository']['full_name']
+                        repo_url = payload['repository']['url']
+                        compare_url = payload['compare']
+                        ref = payload['ref']
+                        head_commit = payload['head_commit']
+                        git_url = payload['repository']['git_url']
+
+                        print(f"""
+                          Ref: {ref}\n
+                          Repository name: {repo_name}\n
+                          Repository URL: {repo_url}\n
+                          Compare URL: {compare_url}\n
+                          Head commit: {head_commit}\n
+                        """)
+
+                      except Exception as err:
+                        raise Exception(f"Failed to parse github payload. Was this "
+                              f"triggered from Github?")
