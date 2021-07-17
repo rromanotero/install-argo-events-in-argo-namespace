@@ -61,15 +61,19 @@ spec:
                         raw_payload = '{{inputs.parameters.payload}}'
                         payload = json.loads(raw_payload)
 
-                        repo_name = payload['repository']['full_name']
+                        repo_full_name = payload['repository']['full_name']
+                        repo_name = repo_full_name.split("/")[-1]
                         repo_url = payload['repository']['url']
                         compare_url = payload['compare']
                         ref = payload['ref']
+                        branch_name = ref.split("/")[-1]
                         head_commit = payload['head_commit']
 
                         print(f"""
                           Repository params:
                           - Ref: {ref}\n
+                          - Branch name: {branch_name}\n
+                          - Repository full name: {repo_full_name}\n
                           - Repository name: {repo_name}\n
                           - Repository URL: {repo_url}\n
                           - Compare URL: {compare_url}\n
@@ -80,11 +84,11 @@ spec:
                               f"triggered from Github? Here's the original "
                               f"unprocessed payload:\n\n {raw_payload}")
 
-                      #Clone + Checkout
+                      #Clone
                       try:
                         print(f"Cloning repository {repo_url}")
                         proc = subprocess.Popen(
-                          [f"git clone {repo_url} && git checkout {ref}"],
+                          [f"git clone {repo_url}"],
                           shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True
                           )
                         proc.wait()
@@ -98,3 +102,23 @@ spec:
 
                       except Exception as err:
                         raise Exception(f"Failed to clone github repo. {err}") from err
+
+
+                      #Checkout
+                      try:
+                        print(f"Checking out branch {branch_name}")
+                        proc = subprocess.Popen(
+                          [f"cd {repo_name} && git checkout {branch_name}"],
+                          shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True
+                          )
+                        proc.wait()
+                        output = proc.stdout.read().decode('ascii').replace("\n", "")
+
+                        if proc.returncode == 0:
+                          print(output, flush=True)
+                        else:
+                          raise Exception(f"Git checkout exited with code {proc.returncode}."
+                                          f"output:\n\n {output}")
+
+                      except Exception as err:
+                        raise Exception(f"Failed to checkout git branch. {err}") from err
