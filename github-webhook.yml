@@ -38,43 +38,63 @@ spec:
                 templates:
                 - name: pipeline
                   steps:
-                  - - name: parse-payload
-                      template: parse-payload
+                  - - name: clone
+                      template: clone
                       arguments:
                         parameters:
                         - name: payload
                           value: "{{workflow.parameters.payload}}"
-                - name: parse-payload
+                - name: clone
                   inputs:
                     parameters:
                     - name: payload
                   script:
-                    image: python:alpine3.9
+                    image: public.ecr.aws/k7d0s6i7/public_system_container_ci:local
                     command: [python]
                     source: |
                       import json
+                      import subprocess
+                      from subprocess import Popen, PIPE, STDOUT
 
-                      raw_payload = '{{inputs.parameters.payload}}'
-                      print(f"Unprocessed Github payload:\n\n {raw_payload}")
-
-                      payload = json.loads(raw_payload)
-
+                      #Parse git params
                       try:
+                        raw_payload = '{{inputs.parameters.payload}}'
+                        payload = json.loads(raw_payload)
+
                         repo_name = payload['repository']['full_name']
                         repo_url = payload['repository']['url']
                         compare_url = payload['compare']
                         ref = payload['ref']
                         head_commit = payload['head_commit']
-                        git_url = payload['repository']['git_url']
 
                         print(f"""
-                          Ref: {ref}\n
-                          Repository name: {repo_name}\n
-                          Repository URL: {repo_url}\n
-                          Compare URL: {compare_url}\n
-                          Head commit: {head_commit}\n
-                        """)
-
+                          Repository params:
+                          - Ref: {ref}\n
+                          - Repository name: {repo_name}\n
+                          - Repository URL: {repo_url}\n
+                          - Compare URL: {compare_url}\n
+                          - Head commit: {json.dumps(head_commit, indent=4)}\n\n
+                        """, flush=True)
                       except Exception as err:
                         raise Exception(f"Failed to parse github payload. Was this "
-                              f"triggered from Github?")
+                              f"triggered from Github? Here's the original "
+                              f"unprocessed payload:\n\n {raw_payload}")
+
+                      #Clone + Checkout
+                      try:
+                        print(f"Cloning repository {repo_url}")
+                        proc = subprocess.Popen(
+                          [f"git clone {repo_url} && git checkout {ref}"],
+                          shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True
+                          )
+                        proc.wait()
+                        output = proc.stdout.read().decode('ascii').replace("\n", "")
+
+                        if proc.returncode == 0:
+                          print(output, flush=True)
+                        else:
+                          raise Exception(f"Git clone exited with code {proc.returncode}."
+                                          f"output:\n\n {output}")
+
+                      except Exception as err:
+                        raise Exception(f"Failed to clone github repo. {err}") from err
