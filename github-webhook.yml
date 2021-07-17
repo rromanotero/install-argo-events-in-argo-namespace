@@ -50,75 +50,55 @@ spec:
                     - name: payload
                   script:
                     image: public.ecr.aws/k7d0s6i7/public_system_container_ci:local
-                    command: [python]
+                    imagePullPolicy: Always
+                    command: [bash]
                     source: |
-                      import json
-                      import subprocess
-                      from subprocess import Popen, PIPE, STDOUT
+                      set +x
+                      set -e
 
-                      #Parse git params
-                      try:
-                        raw_payload = '{{inputs.parameters.payload}}'
-                        payload = json.loads(raw_payload)
+                      PAYLOAD='{{inputs.parameters.payload}}'
 
-                        repo_full_name = payload['repository']['full_name']
-                        repo_name = repo_full_name.split("/")[-1]
-                        repo_url = payload['repository']['url']
-                        compare_url = payload['compare']
-                        ref = payload['ref']
-                        branch_name = ref.split("/")[-1]
-                        head_commit = payload['head_commit']
+                      echo '=============================================='
+                      echo '        Original unprocessed payload          '
+                      echo '=============================================='
+                      echo $PAYLOAD
 
-                        print(f"""
-                          Repository params:
-                          - Ref: {ref}\n
-                          - Branch name: {branch_name}\n
-                          - Repository full name: {repo_full_name}\n
-                          - Repository name: {repo_name}\n
-                          - Repository URL: {repo_url}\n
-                          - Compare URL: {compare_url}\n
-                          - Head commit: {json.dumps(head_commit, indent=4)}\n\n
-                        """, flush=True)
-                      except Exception as err:
-                        raise Exception(f"Failed to parse github payload. Was this "
-                              f"triggered from Github? Here's the original "
-                              f"unprocessed payload:\n\n {raw_payload}")
+                      echo '=============================================='
+                      echo '                Parsing git params            '
+                      echo '=============================================='
+                      REPO_URL=$(echo $PAYLOAD | jq -r .repository.url)
+                      REPO_FULL_NAME=$(echo $PAYLOAD | jq -r .repository.full_name)
+                      REPO_NAME=$(echo $PAYLOAD | jq -r .repository.name)
+                      REF=$(echo $PAYLOAD | jq -r .ref)
+                      BRANCH_NAME=${REF##*/}
+                      COMMIT_ID=$(echo $PAYLOAD | jq -r .head_commit.id)
+                      COMMIT_MESSAGE=$(echo $PAYLOAD | jq -r .head_commit.message)
+                      COMPARE_URL=$(echo $PAYLOAD | jq -r .compare)
 
-                      #Clone
-                      try:
-                        print(f"Cloning repository {repo_url}")
-                        proc = subprocess.Popen(
-                          [f"git clone {repo_url}"],
-                          shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True
-                          )
-                        proc.wait()
-                        output = proc.stdout.read().decode('ascii').replace("\n", "")
+                      echo "Repo Url: "$REPO_URL
+                      echo "Repo full name: "$REPO_FULL_NAME
+                      echo "Repo name: "$REPO_NAME
+                      echo "Ref: "$REF
+                      echo "Branch Name: "$BRANCH_NAME
+                      echo "Comit ID: "$COMMIT_ID
+                      echo "Commit message: "$COMMIT_MESSAGE
+                      echo "Compare URL: "$COMPARE_URL
 
-                        if proc.returncode == 0:
-                          print(output, flush=True)
-                        else:
-                          raise Exception(f"Git clone exited with code {proc.returncode}."
-                                          f"output:\n\n {output}")
+                      echo '=============================================='
+                      echo '             Git clone + checkout             '
+                      echo '=============================================='
+                      git clone $REPO_URL
+                      cd $REPO_NAME && git checkout $BRANCH_NAME
 
-                      except Exception as err:
-                        raise Exception(f"Failed to clone github repo. {err}") from err
-
-
-                      #Checkout
-                      try:
-                        print(f"Checking out branch {branch_name}")
-                        proc = subprocess.Popen(
-                          [f"cd {repo_name} && git checkout {branch_name}"],
-                          shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True
-                          )
-                        proc.wait()
-                        output = proc.stdout.read().decode('ascii').replace("\n", "")
-
-                        if proc.returncode == 0:
-                          print(output, flush=True)
-                        else:
-                          raise Exception(f"Git checkout exited with code {proc.returncode}."
-                                          f"output:\n\n {output}")
-
-                      except Exception as err:
-                        raise Exception(f"Failed to checkout git branch. {err}") from err
+                      echo '=============================================='
+                      echo '              Project contents                '
+                      echo '=============================================='
+                      ls .
+                      cho '==============================================='
+                      echo '             Detecting Services              '
+                      echo '=============================================='
+                      echo '....PENDING....'
+                      echo '=============================================='
+                      echo '                 Build Service                '
+                      echo '=============================================='
+                      echo '....PENDING....'
