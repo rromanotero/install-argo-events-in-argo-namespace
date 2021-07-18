@@ -81,7 +81,7 @@ spec:
                       REPO_FULL_NAME=$(grep "repo_full_name" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
                       REF=$(grep "ref" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
                       BRANCH_NAME=${REF##*/}
-                      $REPO_PATH=$(PWD)/${REPO_FULL_NAME##*/}
+                      REPO_PATH=$(pwd)/${REPO_FULL_NAME##*/}
 
                       git clone $CLONE_URL
                       cd $REPO_PATH && git checkout $BRANCH_NAME && cd ..
