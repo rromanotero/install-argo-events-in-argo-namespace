@@ -96,8 +96,6 @@ spec:
                       SERVICES_FOUND_FILE_PATH=$(mktemp)
                       /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
-                      cat $SERVICES_FOUND_FILE_PATH
-
                       echo '=============================================='
                       echo '                 Build services                '
                       echo '=============================================='
