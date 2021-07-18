@@ -56,49 +56,49 @@ spec:
                       set +x
                       set -e
 
-                      PAYLOAD='{{inputs.parameters.payload}}'
+                      PAYLOAD_FILE_PATH=$(mktemp)
+
+                      cat >$PAYLOAD_FILE_PATH<<EOL
+                      {{inputs.parameters.payload}}
+                      EOL
 
                       echo '=============================================='
                       echo '        Original unprocessed payload          '
                       echo '=============================================='
-                      echo $PAYLOAD
+                      cat $PAYLOAD_FILE_PATH
 
                       echo '=============================================='
-                      echo '                Parsing git params            '
+                      echo '               Parse git params               '
                       echo '=============================================='
-                      CLONE_URL=$(echo $PAYLOAD | jq -r .repository.clone_url)
-                      REPO_FULL_NAME=$(echo $PAYLOAD | jq -r .repository.full_name)
-                      REPO_NAME=$(echo $PAYLOAD | jq -r .repository.name)
-                      REF=$(echo $PAYLOAD | jq -r .ref)
-                      BRANCH_NAME=${REF##*/}
-                      COMMIT_ID=$(echo $PAYLOAD | jq -r .head_commit.id)
-                      COMMIT_MESSAGE=$(echo $PAYLOAD | jq -r .head_commit.message)
-                      COMPARE_URL=$(echo $PAYLOAD | jq -r .compare)
+                      GIT_PARAMS_FILE_PATH=$(mktemp)
+                      /pipeline/parse_git_params.sh $PAYLOAD_FILE_PATH $GIT_PARAMS_FILE_PATH
 
-                      echo "Clone URL: "$CLONE_URL
-                      echo "Repo full name: "$REPO_FULL_NAME
-                      echo "Repo name: "$REPO_NAME
-                      echo "Ref: "$REF
-                      echo "Branch Name: "$BRANCH_NAME
-                      echo "Comit ID: "$COMMIT_ID
-                      echo "Commit message: "$COMMIT_MESSAGE
-                      echo "Compare URL: "$COMPARE_URL
 
                       echo '=============================================='
                       echo '             Git clone + checkout             '
                       echo '=============================================='
+                      CLONE_URL=$(grep "clone_url" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
+                      REPO_FULL_NAME=$(grep "repo_full_name" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
+                      REF=$(grep "ref" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
+                      BRANCH_NAME=${REF##*/}
+                      $REPO_PATH=$(PWD)/${REPO_FULL_NAME##*/}
+
                       git clone $CLONE_URL
-                      cd $REPO_NAME && git checkout $BRANCH_NAME
+                      cd $REPO_PATH && git checkout $BRANCH_NAME && cd ..
 
                       echo '=============================================='
                       echo '              Project contents                '
                       echo '=============================================='
-                      ls .
-                      echo '==============================================='
-                      echo '             Detecting Services              '
+                      ls $REPO_PATH
                       echo '=============================================='
-                      echo '....PENDING....'
+                      echo '             Detect user services             '
                       echo '=============================================='
-                      echo '                 Build Service                '
+                      SERVICES_FOUND_FILE_PATH=$(mktemp)
+                      /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
+
+                      cat $SERVICES_FOUND_FILE_PATH
+
+                      echo '=============================================='
+                      echo '                 Build services                '
                       echo '=============================================='
                       echo '....PENDING....'
