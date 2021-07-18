@@ -66,7 +66,7 @@ spec:
                       echo '=============================================='
                       echo '                Parsing git params            '
                       echo '=============================================='
-                      REPO_URL=$(echo $PAYLOAD | jq -r .repository.url)
+                      CLONE_URL=$(echo $PAYLOAD | jq -r .repository.clone_url)
                       REPO_FULL_NAME=$(echo $PAYLOAD | jq -r .repository.full_name)
                       REPO_NAME=$(echo $PAYLOAD | jq -r .repository.name)
                       REF=$(echo $PAYLOAD | jq -r .ref)
@@ -75,7 +75,7 @@ spec:
                       COMMIT_MESSAGE=$(echo $PAYLOAD | jq -r .head_commit.message)
                       COMPARE_URL=$(echo $PAYLOAD | jq -r .compare)
 
-                      echo "Repo Url: "$REPO_URL
+                      echo "Clone URL: "$CLONE_URL
                       echo "Repo full name: "$REPO_FULL_NAME
                       echo "Repo name: "$REPO_NAME
                       echo "Ref: "$REF
@@ -87,14 +87,14 @@ spec:
                       echo '=============================================='
                       echo '             Git clone + checkout             '
                       echo '=============================================='
-                      git clone $REPO_URL
+                      git clone $CLONE_URL
                       cd $REPO_NAME && git checkout $BRANCH_NAME
 
                       echo '=============================================='
                       echo '              Project contents                '
                       echo '=============================================='
                       ls .
-                      cho '==============================================='
+                      echo '==============================================='
                       echo '             Detecting Services              '
                       echo '=============================================='
                       echo '....PENDING....'
