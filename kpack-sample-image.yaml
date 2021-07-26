@@ -1,7 +1,7 @@
 apiVersion: kpack.io/v1alpha1
 kind: Image
 metadata:
-  name: test-repo
+  name: test-repo-aba214a097e4d191cb1f6c9bf261a57ce09d92ec
   namespace: kpack
 spec:
   tag: rromanotero/image
