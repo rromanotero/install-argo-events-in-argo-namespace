@@ -1,16 +1,16 @@
 apiVersion: kpack.io/v1alpha1
 kind: Builder
 metadata:
-  name: kpack-sample-builder
-  namespace: kpack
+  name: my-builder
+  namespace: default
 spec:
   serviceAccount: tutorial-service-account
   tag: rromanotero/builder
   stack:
-    name: kpack-cluster-stack
+    name: base
     kind: ClusterStack
   store:
-    name: kpack-cluster-store
+    name: default
     kind: ClusterStore
   order:
   - group:

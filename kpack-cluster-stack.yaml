@@ -1,7 +1,7 @@
 apiVersion: kpack.io/v1alpha1
 kind: ClusterStack
 metadata:
-  name: kpack-cluster-stack
+  name: base
 spec:
   id: "io.buildpacks.stacks.bionic"
   buildImage:

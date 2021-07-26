@@ -1,15 +1,15 @@
 apiVersion: kpack.io/v1alpha1
 kind: Image
 metadata:
-  name: test-repo-aba214a097e4d191cb1f6c9bf261a57ce09d92ec
-  namespace: kpack
+  name: tutorial-image
+  namespace: default
 spec:
   tag: rromanotero/image
-  serviceAccount: kpack-sa
+  serviceAccount: tutorial-service-account
   builder:
-    name: kpack-sample-builder
+    name: my-builder
     kind: Builder
   source:
     git:
-      url: https://github.com/rromanotero/test_repo
-      revision: aba214a097e4d191cb1f6c9bf261a57ce09d92ec
+      url: https://github.com/spring-projects/spring-petclinic
+      revision: 82cb521d636b282340378d80a6307a08e3d4a4c4
