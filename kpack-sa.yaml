@@ -4,6 +4,6 @@ metadata:
   name: kpack-sa
   namespace: kpack
 secrets:
-- name: ecr-registry-credentials
+- name: my-docker-credentials
 imagePullSecrets:
-- name: ecr-registry-credentials
+- name: my-docker-credentials
