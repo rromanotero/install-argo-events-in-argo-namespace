@@ -1,0 +1,19 @@
+apiVersion: kpack.io/v1alpha1
+kind: Builder
+metadata:
+  name: kpack-sample-builder
+  namespace: kpack
+spec:
+  serviceAccount: tutorial-service-account
+  tag: rromanotero/builder
+  stack:
+    name: kpack-cluster-stack
+    kind: ClusterStack
+  store:
+    name: kpack-cluster-store
+    kind: ClusterStore
+  order:
+  - group:
+    - id: paketo-buildpacks/java
+  - group:
+    - id: paketo-buildpacks/nodejs

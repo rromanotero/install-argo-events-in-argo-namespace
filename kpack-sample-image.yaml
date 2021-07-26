@@ -1,0 +1,15 @@
+apiVersion: kpack.io/v1alpha1
+kind: Image
+metadata:
+  name: test-repo
+  namespace: kpack
+spec:
+  tag: rromanotero/image
+  serviceAccount: kpack-sa
+  builder:
+    name: kpack-sample-builder
+    kind: Builder
+  source:
+    git:
+      url: https://github.com/rromanotero/test_repo
+      revision: aba214a097e4d191cb1f6c9bf261a57ce09d92ec

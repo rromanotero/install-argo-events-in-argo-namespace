@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kpack-sa
-  namespace: argo
+  namespace: kpack
 secrets:
 - name: ecr-registry-credentials
 imagePullSecrets:
