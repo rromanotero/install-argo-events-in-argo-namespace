@@ -4,7 +4,7 @@ metadata:
   name: my-builder
   namespace: default
 spec:
-  serviceAccount: tutorial-service-account
+  serviceAccount: kpack-build-sa
   tag: rromanotero/builder
   stack:
     name: base

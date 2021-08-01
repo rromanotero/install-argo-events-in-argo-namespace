@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tutorial-service-account
+  name: kpack-build-sa
   namespace: default
 secrets:
 - name: my-docker-credentials

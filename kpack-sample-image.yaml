@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   tag: rromanotero/image
-  serviceAccount: tutorial-service-account
+  serviceAccount: kpack-build-sa
   builder:
     name: my-builder
     kind: Builder
