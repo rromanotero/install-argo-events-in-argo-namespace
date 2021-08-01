@@ -1,15 +1,15 @@
 apiVersion: kpack.io/v1alpha1
 kind: Image
 metadata:
-  name: tutorial-image
+  name: python
   namespace: default
 spec:
   tag: rromanotero/image
   serviceAccount: kpack-build-sa
   builder:
-    name: my-builder
+    name: my-python-builder
     kind: Builder
   source:
     git:
-      url: https://github.com/spring-projects/spring-petclinic
-      revision: 82cb521d636b282340378d80a6307a08e3d4a4c4
+      url: https://github.com/benwilcock/buildpacks-python-demo.git
+      revision: e89f6a00f9b0b57e29f8df5bdcb10f358835c990

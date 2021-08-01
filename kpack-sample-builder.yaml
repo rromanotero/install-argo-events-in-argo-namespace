@@ -1,19 +1,14 @@
 apiVersion: kpack.io/v1alpha1
 kind: Builder
 metadata:
-  name: my-builder
+  name: my-python-builder
   namespace: default
 spec:
   serviceAccount: kpack-build-sa
   tag: rromanotero/builder
   stack:
-    name: base
+    name: full
     kind: ClusterStack
   store:
-    name: default
+    name: python-store
     kind: ClusterStore
-  order:
-  - group:
-    - id: paketo-buildpacks/java
-  - group:
-    - id: paketo-buildpacks/nodejs
