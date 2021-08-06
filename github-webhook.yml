@@ -48,10 +48,26 @@ spec:
                   inputs:
                     parameters:
                     - name: payload
+                  sidecars:
+                    - name: dind
+                      image: docker:19.03.13-dind          # Docker already provides an image for running a Docker daemon
+                      env:
+                        - name: DOCKER_TLS_CERTDIR         # Docker TLS env config
+                          value: ""
+                      securityContext:
+                        privileged: true                # the Docker daemon can only run in a privileged container
+                      # mirrorVolumeMounts will mount the same volumes specified in the main container
+                      # to the sidecar (including artifacts), at the same mountPaths. This enables
+                      # dind daemon to (partially) see the same filesystem as the main container in
+                      # order to use features such as docker volume binding.
+                      mirrorVolumeMounts: true
                   script:
                     image: public.ecr.aws/k7d0s6i7/public_system_container_ci:local
                     imagePullPolicy: Always
                     command: [bash]
+                    env:
+                      - name: DOCKER_HOST
+                        value: 127.0.0.1
                     source: |
                       set +x
                       set -e
@@ -94,9 +110,10 @@ spec:
                       echo '             Detect user services             '
                       echo '=============================================='
                       SERVICES_FOUND_FILE_PATH=$(mktemp)
-                      /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
+                      #/pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
                       echo '                 Build services                '
                       echo '=============================================='
-                      echo '....PENDING....'
+                      docker --version
+                      docker ps
