@@ -106,6 +106,7 @@ spec:
                       echo '              Project contents                '
                       echo '=============================================='
                       ls $REPO_PATH
+
                       echo '=============================================='
                       echo '             Detect user services             '
                       echo '=============================================='
@@ -117,3 +118,4 @@ spec:
                       echo '=============================================='
                       docker --version
                       docker ps
+                      pack --version
