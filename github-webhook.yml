@@ -118,7 +118,10 @@ spec:
                       echo '=============================================='
                       REPO_LASTNAME=${REPO_FULL_NAME##*/}
                       while read service_name; do
-                        IMAGE_NAME=$REPO_LASTNAME/$service_name
+                        IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
                         SERVICE_PATH=$REPO_PATH/services/$service_name
+                        echo '----------------------------------'
+                        echo 'Building image '$IMAGE_NAME' from repo '$SERVICE_PATH
+                        echo '----------------------------------'
                         pack build $IMAGE_NAME:$BRANCH_NAME --path $SERVICE_PATH --builder gcr.io/buildpacks/builder:v1
                       done < $SERVICES_FOUND_FILE_PATH
