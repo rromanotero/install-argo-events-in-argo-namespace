@@ -67,7 +67,7 @@ spec:
                     command: [bash]
                     env:
                       - name: DOCKER_HOST
-                        value: 127.0.0.1
+                        value: tcp://127.0.0.1:2375
                     source: |
                       set +x
                       set -e
@@ -105,17 +105,20 @@ spec:
                       echo '=============================================='
                       echo '              Project contents                '
                       echo '=============================================='
-                      ls $REPO_PATH
+                      tree $REPO_PATH
 
                       echo '=============================================='
                       echo '             Detect user services             '
                       echo '=============================================='
                       SERVICES_FOUND_FILE_PATH=$(mktemp)
-                      #/pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
+                      /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '                 Build services                '
+                      echo '                 Build services               '
                       echo '=============================================='
-                      docker --version
-                      docker ps
-                      pack --version
+                      REPO_LASTNAME=${REPO_FULL_NAME##*/}
+                      while read service_name; do
+                        IMAGE_NAME=$REPO_LASTNAME/$service_name
+                        SERVICE_PATH=$REPO_PATH/services/$service_name
+                        pack build $IMAGE_NAME:$BRANCH_NAME --path $SERVICE_PATH --builder gcr.io/buildpacks/builder:v1
+                      done < $SERVICES_FOUND_FILE_PATH
