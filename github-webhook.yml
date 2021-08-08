@@ -68,6 +68,16 @@ spec:
                     env:
                       - name: DOCKER_HOST
                         value: tcp://127.0.0.1:2375
+                      - name: DOCKER_USER  # name of env var
+                        valueFrom:
+                          secretKeyRef:
+                            name: docker-user
+                            key: user
+                      - name: DOCKER_PSW  # name of env var
+                        valueFrom:
+                          secretKeyRef:
+                            name: docker-psw
+                            key: psw
                     source: |
                       set +x
                       set -e
@@ -127,8 +137,11 @@ spec:
                       done < $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '                  Pubishing                  '
+                      echo '                  Publishing                  '
                       echo '=============================================='
+                      echo $DOCKER_PSW > docker_psw
+                      cat docker_psw | docker login --username $DOCKER_USER --password-stdin
+
                       while read service_name; do
                         IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
                         docker push $IMAGE_NAME:$BRANCH_NAME
