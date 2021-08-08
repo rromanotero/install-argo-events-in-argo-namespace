@@ -125,3 +125,11 @@ spec:
                         echo '----------------------------------'
                         pack build $IMAGE_NAME:$BRANCH_NAME --path $SERVICE_PATH --builder gcr.io/buildpacks/builder:v1
                       done < $SERVICES_FOUND_FILE_PATH
+
+                      echo '=============================================='
+                      echo '                  Pubishing                  '
+                      echo '=============================================='
+                      while read service_name; do
+                        IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
+                        docker push $IMAGE_NAME:$BRANCH_NAME
+                      done < $SERVICES_FOUND_FILE_PATH
