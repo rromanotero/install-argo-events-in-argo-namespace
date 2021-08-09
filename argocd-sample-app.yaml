@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: light_sensor
+  name: light-sensor
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/rromanotero/test_repo_cd_config.git
-    path: light_sensor
+    path: light-sensor
   destination:
     server: https://kubernetes.default.svc
     namespace: light-sensor
