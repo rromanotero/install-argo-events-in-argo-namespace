@@ -126,6 +126,9 @@ spec:
                       echo '=============================================='
                       echo '                 Build services               '
                       echo '=============================================='
+                      echo 'waiting for docker daemon to be ready'
+                      until docker ps; do sleep 1; done;
+
                       REPO_LASTNAME=${REPO_FULL_NAME##*/}
                       while read service_name; do
                         IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
@@ -153,6 +156,6 @@ spec:
                       while read service_name; do
                         SERVICE_PATH=$REPO_PATH/services/$service_name
                         echo 'Creating/updating argocd app for service '$service_name
-                        
+
                         kubectl apply -f $SERVICE_PATH/argocd/argocd_app.yaml
                       done < $SERVICES_FOUND_FILE_PATH
