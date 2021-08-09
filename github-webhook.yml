@@ -153,5 +153,6 @@ spec:
                       while read service_name; do
                         SERVICE_PATH=$REPO_PATH/services/$service_name
                         echo 'Creating/updating argocd app for service '$service_name
+                        
                         kubectl apply -f $SERVICE_PATH/argocd/argocd_app.yaml
                       done < $SERVICES_FOUND_FILE_PATH
