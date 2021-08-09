@@ -9,7 +9,6 @@ spec:
   project: default
   source:
     repoURL: https://github.com/rromanotero/test_repo_cd_config.git
-    targetRevision: fd60522037b221f246009265e5d8a89cf17a7b5a
     chart: light-sensor
   destination:
     server: https://kubernetes.default.svc
