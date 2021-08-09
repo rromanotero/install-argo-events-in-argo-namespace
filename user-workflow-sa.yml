@@ -5,7 +5,7 @@ metadata:
   name: user-workflow-sa
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: user-workflow-role
 rules:
@@ -47,14 +47,14 @@ rules:
       - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: user-workflow-role-binding
-  namespace: argo
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: user-workflow-role
 subjects:
   - kind: ServiceAccount
     name: user-workflow-sa
+    namespace: argo
