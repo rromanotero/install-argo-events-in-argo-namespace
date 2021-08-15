@@ -124,19 +124,57 @@ spec:
                       /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '                 Build services               '
+                      echo '                Build Services                '
                       echo '=============================================='
-                      echo 'waiting for docker daemon to be ready'
-                      until docker ps; do sleep 1; done;
-
                       REPO_LASTNAME=${REPO_FULL_NAME##*/}
+                      COMMIT_ID=$(grep "commit_id" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
+
+                      KPACK_FILE_PATH=$(mktemp)
+
+                      cat >$KPACK_FILE_PATH<<EOL
+                      apiVersion: kpack.io/v1alpha1
+                      kind: Image
+                      metadata:
+                        name: _KPACK_IMAGE_NAME_
+                        namespace: default
+                      spec:
+                        tag: _IMAGE_NAME_
+                        serviceAccount: kpack-build-sa
+                        builder:
+                          name: builder
+                          kind: Builder
+                        source:
+                          git:
+                            url: _REPO_URL_
+                            revision: $COMMIT_ID
+                      EOL
+
                       while read service_name; do
+
+                        KPACK_IMAGE_NAME=$REPO_LASTNAME
                         IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
-                        SERVICE_PATH=$REPO_PATH/services/$service_name
-                        echo '----------------------------------'
-                        echo 'Building image '$IMAGE_NAME' from repo '$SERVICE_PATH
-                        echo '----------------------------------'
-                        pack build $IMAGE_NAME:$BRANCH_NAME --path $SERVICE_PATH --builder gcr.io/buildpacks/builder:v1
+
+                        echo '--------'
+                        echo 'kpack image name = '$KPACK_IMAGE_NAME-$COMMIT_ID
+                        echo 'image name = '$IMAGE_NAME
+                        echo ''
+
+                        sed -i "s|_KPACK_IMAGE_NAME_|$KPACK_IMAGE_NAME|g" $KPACK_FILE_PATH
+                        sed -i "s|_IMAGE_NAME_|$IMAGE_NAME|g" $KPACK_FILE_PATH
+                        sed -i "s|_REPO_URL_|$CLONE_URL|g" $KPACK_FILE_PATH
+
+                        cat $KPACK_FILE_PATH
+                        kubectl apply -f $KPACK_FILE_PATH
+
+                        sleep 10
+                        kubectl -n default get images $KPACK_IMAGE_NAME
+                        sleep 10
+                        kubectl -n default get images $KPACK_IMAGE_NAME
+                        sleep 10
+                        kubectl -n default get images $KPACK_IMAGE_NAME
+                        sleep 10
+                        kubectl -n default get images $KPACK_IMAGE_NAME
+
                       done < $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
