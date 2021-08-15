@@ -1,7 +1,7 @@
 apiVersion: kpack.io/v1alpha1
 kind: Image
 metadata:
-  name: python2
+  name: python3
   namespace: default
 spec:
   tag: rromanotero/image
