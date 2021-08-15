@@ -7,7 +7,7 @@ spec:
   tag: rromanotero/image
   serviceAccount: kpack-build-sa
   builder:
-    name: my-builder
+    name: builder
     kind: Builder
   source:
     git:
