@@ -45,6 +45,26 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - "images.kpack.io"
+    resources:
+      - images
+    verbs:
+      - create
+      - patch
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "kpack.io"
+    resources:
+      - images
+    verbs:
+      - create
+      - patch
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
