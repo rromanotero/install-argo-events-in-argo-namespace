@@ -175,22 +175,11 @@ spec:
 
                       done < $SERVICES_FOUND_FILE_PATH
 
-                      # echo '=============================================='
-                      # echo '                  Publishing                  '
-                      # echo '=============================================='
-                      # echo $DOCKER_PSW > docker_psw
-                      # cat docker_psw | docker login --username $DOCKER_USER --password-stdin
-                      #
-                      # while read service_name; do
-                      #   IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
-                      #   docker push $IMAGE_NAME:$BRANCH_NAME
-                      # done < $SERVICES_FOUND_FILE_PATH
-                      #
-                      # echo '=============================================='
-                      # echo '           Triggering Deployments             '
-                      # echo '=============================================='
-                      # while read service_name; do
-                      #   SERVICE_PATH=$REPO_PATH/services/$service_name
-                      #   echo 'Creating/Updating argocd app for service '$service_name
-                      #   kubectl apply -f $SERVICE_PATH/argocd/app.yaml
-                      # done < $SERVICES_FOUND_FILE_PATH
+                      echo '=============================================='
+                      echo '           Triggering Deployments             '
+                      echo '=============================================='
+                      while read service_name; do
+                        SERVICE_PATH=$REPO_PATH/services/$service_name
+                        echo 'Creating/Updating argocd app for service '$service_name
+                        kubectl apply -f $SERVICE_PATH/argocd/app.yaml
+                      done < $SERVICES_FOUND_FILE_PATH
