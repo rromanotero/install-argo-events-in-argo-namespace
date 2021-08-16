@@ -124,7 +124,7 @@ spec:
                       /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '                Build Services                '
+                      echo '             Trigger Kpack Builds             '
                       echo '=============================================='
                       REPO_LASTNAME=${REPO_FULL_NAME##*/}
                       COMMIT_ID=$(grep "commit_id" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
@@ -150,12 +150,14 @@ spec:
                           subPath: services/_SERVICE_NAME_
                       EOL
 
+                      declare -a kpack_images=()
                       while read service_name; do
 
                         KPACK_IMAGE_NAME=$REPO_LASTNAME-$service_name-$COMMIT_ID
                         KPACK_IMAGE_NAME=$(echo "$KPACK_IMAGE_NAME" | tr '_' '-')
                         IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
 
+                        kpack_images+=($KPACK_IMAGE_NAME)
 
                         echo '--------'
                         echo 'kpack image name = '$KPACK_IMAGE_NAME
@@ -177,11 +179,58 @@ spec:
 
                       done < $SERVICES_FOUND_FILE_PATH
 
-                      # echo '=============================================='
-                      # echo '           Triggering Deployments             '
-                      # echo '=============================================='
-                      # while read service_name; do
-                      #   SERVICE_PATH=$REPO_PATH/services/$service_name
-                      #   echo 'Creating/Updating argocd app for service '$service_name
-                      #   kubectl apply -f $SERVICE_PATH/argocd/app.yaml
-                      # done < $SERVICES_FOUND_FILE_PATH
+                      echo '=============================================='
+                      echo '          Wait for Builds to complete         '
+                      echo '=============================================='
+
+                      for image in "${kpack_images[@]}"
+                      do
+                         nohup logs -image $image 1> kpack_output_$image 2> kpack_output_$image &
+                         echo "Log stream configured for $image"
+                      done
+
+                      echo '' > /tmp/completed
+
+                      COMPLETED=0
+                      NUM_OF_IMAGES=${#kpack_images[@]}
+
+                      echo 'Displaying logs:'
+                      while [ $COMPLETED -lt $NUM_OF_IMAGES ]
+                      do
+                        sleep 1
+                        for image in "${kpack_images[@]}"
+                        do
+                           echo '--------------------------'
+                           echo 'LOGS FOR IMAGE '$image
+                           (
+                              flock -x 200
+
+                              cat kpack_output_$image
+
+                              echo ''
+                              if grep -q "COMPLETION" kpack_output_$image
+                              then
+                                  echo 'COMPLETION DETECTED'
+                                  echo 'completed' >> /tmp/completed
+                              fi
+
+                              echo '' > kpack_output_$image
+
+                           ) 200>/var/lock/mylockfile
+
+                           COMPLETED=$(wc -l /tmp/completed | awk '{ print $1 }')
+
+                           echo 'COMPLETED '$COMPLETED' of '$NUM_OF_IMAGES
+
+                           echo '--------------------------'
+                        done
+                      done
+
+                      echo '=============================================='
+                      echo '           Triggering Deployments             '
+                      echo '=============================================='
+                      while read service_name; do
+                        SERVICE_PATH=$REPO_PATH/services/$service_name
+                        echo 'Creating/Updating argocd app for service '$service_name
+                        kubectl apply -f $SERVICE_PATH/argocd/app.yaml
+                      done < $SERVICES_FOUND_FILE_PATH
