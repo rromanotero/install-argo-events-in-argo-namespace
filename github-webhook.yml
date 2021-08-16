@@ -197,38 +197,33 @@ spec:
                       echo 'Displaying logs:'
                       while [ $COMPLETED -lt $NUM_OF_IMAGES ]
                       do
-                          sleep 1
+                        sleep 10
+                        for image in "${kpack_images[@]}"
+                        do
+                           echo '--------------------------'
+                           echo 'LOGS FOR IMAGE '$image
+                           (
+                              flock -x 200
 
-                          for image in "${kpack_images[@]}"
-                          do
-                              if [ -s kpack_output_$image ]; then
-                                 # There's new output
+                              cat kpack_output_$image
 
-                                 echo '--------------------------'
-                                 echo 'LOGS FOR IMAGE '$image
-                                 (
-                                    flock -x 200
-
-                                    cat kpack_output_$image
-
-                                    echo ''
-                                    if grep -q "COMPLETION" kpack_output_$image
-                                    then
-                                        echo 'COMPLETION DETECTED'
-                                        echo 'completed' >> /tmp/completed
-                                    fi
-
-                                    echo '' > kpack_output_$image
-
-                                 ) 200>/var/lock/mylockfile
-
-                                 COMPLETED=$(wc -l /tmp/completed | awk '{ print $1 }')
-
-                                 echo 'COMPLETED '$COMPLETED' of '$NUM_OF_IMAGES
-
-                                 echo '--------------------------'
+                              echo ''
+                              if grep -q "COMPLETION" kpack_output_$image
+                              then
+                                  echo 'COMPLETION DETECTED'
+                                  echo 'completed' >> /tmp/completed
                               fi
-                          done
+
+                              echo '' > kpack_output_$image
+
+                           ) 200>/var/lock/mylockfile
+
+                           COMPLETED=$(wc -l /tmp/completed | awk '{ print $1 }')
+
+                           echo 'COMPLETED '$COMPLETED' of '$NUM_OF_IMAGES
+
+                           echo '--------------------------'
+                        done
                       done
 
                       echo '=============================================='
