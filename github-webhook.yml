@@ -147,6 +147,7 @@ spec:
                           git:
                             url: _REPO_URL_
                             revision: $COMMIT_ID
+                          subPath: services/_SERVICE_NAME_
                       EOL
 
                       while read service_name; do
@@ -159,13 +160,14 @@ spec:
                         echo '--------'
                         echo 'kpack image name = '$KPACK_IMAGE_NAME
                         echo 'image name = '$IMAGE_NAME
-                        echo ''
+                        echo 'service name ='$service_name
 
                         cp $KPACK_TEMPLATE_PATH /tmp/kpack.yaml
 
                         sed -i "s|_KPACK_IMAGE_NAME_|$KPACK_IMAGE_NAME|g" /tmp/kpack.yaml
                         sed -i "s|_IMAGE_NAME_|$IMAGE_NAME|g" /tmp/kpack.yaml
                         sed -i "s|_REPO_URL_|$CLONE_URL|g" /tmp/kpack.yaml
+                        sed -i "s|_SERVICE_NAME_|$service_name|g" /tmp/kpack.yaml
 
                         cat /tmp/kpack.yaml
                         kubectl apply -f /tmp/kpack.yaml
