@@ -261,8 +261,10 @@ spec:
                         cat $CHART_PATH
                         echo ''
 
+                        hub config --global hub.protocol https
                         git config --global user.email "rromanotero@gmail.com"
                         git config --global user.name "rromanotero"
+                        export GITHUB_TOKEN=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
 
                         cd $CD_REPO_PATH && git add . && git commit -m "app upgrade" && git push
 
