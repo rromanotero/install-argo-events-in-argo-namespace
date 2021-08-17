@@ -227,10 +227,40 @@ spec:
                       done
 
                       echo '=============================================='
-                      echo '           Triggering Deployments             '
+                      echo '           Create/Update ArgoCD apps          '
                       echo '=============================================='
                       while read service_name; do
                         SERVICE_PATH=$REPO_PATH/services/$service_name
                         echo 'Creating/Updating argocd app for service '$service_name
                         kubectl apply -f $SERVICE_PATH/argocd/app.yaml
+                      done < $SERVICES_FOUND_FILE_PATH
+
+
+                      echo '=============================================='
+                      echo '             Upgrade Helm Charts              '
+                      echo '=============================================='
+                      CD_CLONE_URL=$(echo $CLONE_URL | cut -f1 -d".git")
+                      CD_CLONE_URL=$CD_CLONE_URL'_cd.git'
+                      CD_REPO_FULL_NAME=$REPO_FULL_NAME'_cd'
+                      CD_REPO_PATH=$(pwd)/${CD_REPO_FULL_NAME##*/}
+
+                      echo "cd_clone_url="$CD_CLONE_URL
+                      echo "cd_repo_fullname="$CD_REPO_FULL_NAME
+                      echo "cd_repo_path="$CD_REPO_PATH
+
+                      git clone $CD_CLONE_URL
+                      cd $CD_REPO_PATH && git checkout $BRANCH_NAME && cd ..
+
+                      while read chart_name; do
+                        CHART_PATH=$REPO_PATH/helm_charts/$chart_name
+                        echo '--------------------------------'
+                        echo 'Upgrading app '$chart_name
+
+                        sed -i "s|_APP_VERSION_|$COMMIT_ID|g" $CHART_PATH
+
+                        cat $CHART_PATH
+                        echo ''
+
+                        helm upgrade app $CHART_PATH
+                        echo '--------------------------------'
                       done < $SERVICES_FOUND_FILE_PATH
