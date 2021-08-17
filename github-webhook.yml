@@ -129,107 +129,29 @@ spec:
                       /pipeline/detect_user_services.sh $REPO_PATH $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '             Trigger Kpack Builds             '
+                      echo '                 Build services               '
                       echo '=============================================='
+                      echo 'waiting for docker daemon to be ready'
+                      until docker ps; do sleep 1; done;
                       REPO_LASTNAME=${REPO_FULL_NAME##*/}
-                      COMMIT_ID=$(grep "commit_id" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
-
-                      KPACK_TEMPLATE_PATH=$(mktemp)
-
-                      cat >$KPACK_TEMPLATE_PATH<<EOL
-                      apiVersion: kpack.io/v1alpha1
-                      kind: Image
-                      metadata:
-                        name: _KPACK_IMAGE_NAME_
-                        namespace: default
-                      spec:
-                        tag: _IMAGE_NAME_
-                        serviceAccount: kpack-build-sa
-                        builder:
-                          name: builder
-                          kind: Builder
-                        source:
-                          git:
-                            url: _REPO_URL_
-                            revision: $COMMIT_ID
-                          subPath: services/_SERVICE_NAME_
-                      EOL
-
-                      declare -a kpack_images=()
                       while read service_name; do
-
-                        KPACK_IMAGE_NAME=$REPO_LASTNAME-$service_name-$COMMIT_ID
-                        KPACK_IMAGE_NAME=$(echo "$KPACK_IMAGE_NAME" | tr '_' '-')
                         IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
-
-                        kpack_images+=($KPACK_IMAGE_NAME)
-
-                        echo '--------'
-                        echo 'kpack image name = '$KPACK_IMAGE_NAME
-                        echo 'image name = '$IMAGE_NAME
-                        echo 'service name ='$service_name
-
-                        cp $KPACK_TEMPLATE_PATH /tmp/kpack.yaml
-
-                        sed -i "s|_KPACK_IMAGE_NAME_|$KPACK_IMAGE_NAME|g" /tmp/kpack.yaml
-                        sed -i "s|_IMAGE_NAME_|$IMAGE_NAME|g" /tmp/kpack.yaml
-                        sed -i "s|_REPO_URL_|$CLONE_URL|g" /tmp/kpack.yaml
-                        sed -i "s|_SERVICE_NAME_|$service_name|g" /tmp/kpack.yaml
-
-                        cat /tmp/kpack.yaml
-                        kubectl apply -f /tmp/kpack.yaml
-
-                        sleep 3
-                        kubectl -n default get images $KPACK_IMAGE_NAME
-
+                        SERVICE_PATH=$REPO_PATH/services/$service_name
+                        echo '----------------------------------'
+                        echo 'Building image '$IMAGE_NAME' from repo '$SERVICE_PATH
+                        echo '----------------------------------'
+                        pack build $IMAGE_NAME:$BRANCH_NAME --path $SERVICE_PATH --builder gcr.io/buildpacks/builder:v1
                       done < $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
-                      echo '          Wait for Builds to complete         '
+                      echo '                  Publishing                  '
                       echo '=============================================='
-
-                      for image in "${kpack_images[@]}"
-                      do
-                         nohup logs -image $image 1> kpack_output_$image 2> kpack_output_$image &
-                         echo "Log stream configured for $image"
-                      done
-
-                      echo '' > /tmp/completed
-
-                      COMPLETED=0
-                      NUM_OF_IMAGES=${#kpack_images[@]}
-
-                      echo 'Displaying logs:'
-                      while [ $COMPLETED -lt $NUM_OF_IMAGES ]
-                      do
-                        sleep 10
-                        for image in "${kpack_images[@]}"
-                        do
-                           echo '--------------------------'
-                           echo 'LOGS FOR IMAGE '$image
-                           (
-                              flock -x 200
-
-                              cat kpack_output_$image
-
-                              echo ''
-                              if grep -q "COMPLETION" kpack_output_$image
-                              then
-                                  echo 'COMPLETION DETECTED'
-                                  echo 'completed' >> /tmp/completed
-                              fi
-
-                              echo '' > kpack_output_$image
-
-                           ) 200>/var/lock/mylockfile
-
-                           COMPLETED=$(wc -l /tmp/completed | awk '{ print $1 }')
-
-                           echo 'COMPLETED '$COMPLETED' of '$NUM_OF_IMAGES
-
-                           echo '--------------------------'
-                        done
-                      done
+                      echo $DOCKER_PSW > docker_psw
+                      cat docker_psw | docker login --username $DOCKER_USER --password-stdin
+                      while read service_name; do
+                        IMAGE_NAME='rromanotero/'$REPO_LASTNAME'_'$service_name
+                        docker push $IMAGE_NAME:$BRANCH_NAME
+                      done < $SERVICES_FOUND_FILE_PATH
 
                       echo '=============================================='
                       echo '           Create/Update ArgoCD apps          '
@@ -244,6 +166,11 @@ spec:
                       echo '=============================================='
                       echo '             Upgrade Helm Charts              '
                       echo '=============================================='
+                      echo 'NOTE:'
+                      echo '   Only master images are currently supported'
+                      echo '   Let future me add it.'
+                      echo '                        '
+                      COMMIT_ID=$(grep "commit_id" $GIT_PARAMS_FILE_PATH | cut -d' ' -f2 )
                       CD_CLONE_URL=${CLONE_URL%.git}
                       CD_CLONE_URL=$CD_CLONE_URL'_cd.git'
                       CD_REPO_FULL_NAME=$REPO_FULL_NAME'_cd'
@@ -251,6 +178,7 @@ spec:
                       CD_REPO_LASTNAME=$(echo $CD_REPO_FULL_NAME | cut -f2 -d"/")
                       CD_REPO_PATH=$(pwd)/${CD_REPO_FULL_NAME##*/}
 
+                      echo "commid_id="$COMMIT_ID
                       echo "cd_clone_url="$CD_CLONE_URL
                       echo "cd_repo_fullname="$CD_REPO_FULL_NAME
                       echo "cd_repo_owner="$CD_REPO_OWNER
@@ -268,14 +196,32 @@ spec:
                       git config --global user.name $username
 
                       git clone https://$owner:$token@github.com/$owner/$repo.git
-                      cd $CD_REPO_PATH && git checkout $BRANCH_NAME && cd ..
+                      cd $CD_REPO_PATH && cd ..
+
+                      CHART_TEMPLATE_PATH=$(mktemp)
+                      cat >$CHART_TEMPLATE_PATH<<EOL
+                      apiVersion: v2
+                      name: _APP_NAME_
+                      description: A Helm chart for Kubernetes
+
+                      type: application
+                      version: 1.0.0
+                      appVersion: _APP_VERSION_
+                      EOL
 
                       while read chart_name; do
                         CHART_PATH=$CD_REPO_PATH/helm_charts/$chart_name/Chart.yaml
+
                         echo '--------------------------------'
                         echo 'Upgrading app '$chart_name
 
-                        sed -i "s|_APP_VERSION_|$COMMIT_ID|g" $CHART_PATH
+                        APP_NAME=$(echo "$chart_name" | tr '_' '-')
+                        APP_VERSION=$BRANCH_NAME'-'$COMMIT_ID
+
+                        cp $CHART_TEMPLATE_PATH $CHART_PATH
+
+                        sed -i "s|_APP_NAME_|$APP_NAME|g" $CHART_PATH
+                        sed -i "s|_APP_VERSION_|$APP_VERSION|g" $CHART_PATH
 
                         echo '|||| chart contents ||||'
                         cat $CHART_PATH
