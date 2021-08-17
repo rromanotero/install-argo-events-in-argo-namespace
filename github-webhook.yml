@@ -239,7 +239,7 @@ spec:
                       echo '=============================================='
                       echo '             Upgrade Helm Charts              '
                       echo '=============================================='
-                      CD_CLONE_URL=$(echo $CLONE_URL | cut -f1 -d".git")
+                      CD_CLONE_URL=${CLONE_URL%.git}
                       CD_CLONE_URL=$CD_CLONE_URL'_cd.git'
                       CD_REPO_FULL_NAME=$REPO_FULL_NAME'_cd'
                       CD_REPO_PATH=$(pwd)/${CD_REPO_FULL_NAME##*/}
@@ -252,7 +252,7 @@ spec:
                       cd $CD_REPO_PATH && git checkout $BRANCH_NAME && cd ..
 
                       while read chart_name; do
-                        CHART_PATH=$REPO_PATH/helm_charts/$chart_name
+                        CHART_PATH=$CD_REPO_PATH/helm_charts/$chart_name/Chart.yaml
                         echo '--------------------------------'
                         echo 'Upgrading app '$chart_name
 
@@ -261,6 +261,10 @@ spec:
                         cat $CHART_PATH
                         echo ''
 
-                        helm upgrade app $CHART_PATH
+                        git config --global user.email "rromanotero@gmail.com"
+                        git config --global user.name "rromanotero"
+
+                        cd $CD_REPO_PATH && git add . && git commit -m "app upgrade" && git push
+
                         echo '--------------------------------'
                       done < $SERVICES_FOUND_FILE_PATH
