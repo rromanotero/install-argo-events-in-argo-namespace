@@ -248,7 +248,7 @@ spec:
                       CD_CLONE_URL=$CD_CLONE_URL'_cd.git'
                       CD_REPO_FULL_NAME=$REPO_FULL_NAME'_cd'
                       CD_REPO_OWNER=$(echo $CD_REPO_FULL_NAME | cut -f1 -d"/")
-                      CD_REPO_LASTNAME=$(echo $CD_REPO_FULL_NAME | cut -f1 -d"/")
+                      CD_REPO_LASTNAME=$(echo $CD_REPO_FULL_NAME | cut -f2 -d"/")
                       CD_REPO_PATH=$(pwd)/${CD_REPO_FULL_NAME##*/}
 
                       echo "cd_clone_url="$CD_CLONE_URL
