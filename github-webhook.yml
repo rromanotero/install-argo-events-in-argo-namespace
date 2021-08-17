@@ -66,6 +66,11 @@ spec:
                     imagePullPolicy: Always
                     command: [bash]
                     env:
+                      - name: GITHUB_TOKEN  # name of env var
+                        valueFrom:
+                          secretKeyRef:
+                            name: github-token
+                            key: token
                       - name: DOCKER_HOST
                         value: tcp://127.0.0.1:2375
                       - name: DOCKER_USER  # name of env var
@@ -242,13 +247,27 @@ spec:
                       CD_CLONE_URL=${CLONE_URL%.git}
                       CD_CLONE_URL=$CD_CLONE_URL'_cd.git'
                       CD_REPO_FULL_NAME=$REPO_FULL_NAME'_cd'
+                      CD_REPO_OWNER=$(echo $CD_REPO_FULL_NAME | cut -f1 -d"/")
+                      CD_REPO_LASTNAME=$(echo $CD_REPO_FULL_NAME | cut -f1 -d"/")
                       CD_REPO_PATH=$(pwd)/${CD_REPO_FULL_NAME##*/}
 
                       echo "cd_clone_url="$CD_CLONE_URL
                       echo "cd_repo_fullname="$CD_REPO_FULL_NAME
+                      echo "cd_repo_owner="$CD_REPO_OWNER
+                      echo "cd_repo_last_name="$CD_REPO_LASTNAME
                       echo "cd_repo_path="$CD_REPO_PATH
 
-                      git clone $CD_CLONE_URL
+                      email="rromanotero@gmail.com"
+                      username="ci-system"
+                      owner=$CD_REPO_OWNER
+                      repo=$CD_REPO_LASTNAME
+                      token=$GITHUB_TOKEN
+
+                      git config --global hub.protocol https
+                      git config --global user.email $email
+                      git config --global user.name $username
+
+                      git clone https://$owner:$token@github.com/$owner/$repo.git
                       cd $CD_REPO_PATH && git checkout $BRANCH_NAME && cd ..
 
                       while read chart_name; do
@@ -258,15 +277,11 @@ spec:
 
                         sed -i "s|_APP_VERSION_|$COMMIT_ID|g" $CHART_PATH
 
+                        echo '|||| chart contents ||||'
                         cat $CHART_PATH
-                        echo ''
+                        echo '|||| chart contents ||||'
 
-                        hub config --global hub.protocol https
-                        git config --global user.email "rromanotero@gmail.com"
-                        git config --global user.name "rromanotero"
-                        export GITHUB_TOKEN=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
-
-                        cd $CD_REPO_PATH && git add . && git commit -m "app upgrade" && git push
+                        cd $CD_REPO_PATH && git add . && git commit -m "app upgrade" && git push origin && cd ..
 
                         echo '--------------------------------'
                       done < $SERVICES_FOUND_FILE_PATH
