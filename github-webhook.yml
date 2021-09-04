@@ -201,7 +201,7 @@ spec:
                       EOL
 
                       while read chart_name; do
-                        CHART_PATH=$CD_REPO_PATH/helm_charts/$chart_name/Chart.yaml
+                        CHART_PATH=$CD_REPO_PATH/services_charts/$chart_name/Chart.yaml
 
                         echo '--------------------------------'
                         echo 'Upgrading app '$chart_name
