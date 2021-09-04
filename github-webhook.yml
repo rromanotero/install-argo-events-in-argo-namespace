@@ -153,15 +153,6 @@ spec:
                         docker push $IMAGE_NAME:$BRANCH_NAME
                       done < $SERVICES_FOUND_FILE_PATH
 
-                      echo '=============================================='
-                      echo '           Create/Update ArgoCD apps          '
-                      echo '=============================================='
-                      while read service_name; do
-                        SERVICE_PATH=$REPO_PATH/services/$service_name
-                        echo 'Creating/Updating argocd app for service '$service_name
-                        kubectl apply -f $SERVICE_PATH/argocd/app.yaml
-                      done < $SERVICES_FOUND_FILE_PATH
-
 
                       echo '=============================================='
                       echo '             Upgrade Helm Charts              '
